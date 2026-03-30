@@ -7,954 +7,1037 @@ namespace SentimentAnalyzerPro.Forms
     public partial class MainForm : Form
     {
         private readonly SentimentService _sentimentService;
-
-        // Colors
-        private Color _darkBg = Color.FromArgb(18, 18, 30);
-        private Color _darkPanel = Color.FromArgb(28, 28, 45);
-        private Color _darkCard = Color.FromArgb(38, 38, 58);
-        private Color _accent = Color.FromArgb(99, 102, 241);
-        private Color _accentGreen = Color.FromArgb(34, 197, 94);
-        private Color _accentRed = Color.FromArgb(239, 68, 68);
-        private Color _textLight = Color.FromArgb(248, 248, 255);
-        private Color _textMuted = Color.FromArgb(148, 163, 184);
-
         private bool _isDarkMode = true;
         private BulkAnalysisSummary? _lastBulkSummary;
 
+        // Theme colors
+        private Color BgColor      => _isDarkMode ? Color.FromArgb(15, 15, 25)    : Color.FromArgb(245, 247, 252);
+        private Color PanelColor   => _isDarkMode ? Color.FromArgb(25, 25, 40)    : Color.FromArgb(255, 255, 255);
+        private Color CardColor    => _isDarkMode ? Color.FromArgb(35, 35, 55)    : Color.FromArgb(235, 238, 248);
+        private Color AccentColor  => Color.FromArgb(99, 102, 241);
+        private Color GreenColor   => Color.FromArgb(34, 197, 94);
+        private Color RedColor     => Color.FromArgb(239, 68, 68);
+        private Color TextColor    => _isDarkMode ? Color.FromArgb(240, 240, 255) : Color.FromArgb(20, 20, 40);
+        private Color MutedColor   => _isDarkMode ? Color.FromArgb(140, 150, 180) : Color.FromArgb(100, 110, 140);
+        private Color BorderColor  => _isDarkMode ? Color.FromArgb(60, 60, 90)    : Color.FromArgb(200, 205, 220);
+
         // Controls
-        private TabControl tabMain = null!;
-        private Panel panelHeader = null!;
-        private Label lblTitle = null!;
-        private Label lblSubtitle = null!;
-        private Button btnToggleTheme = null!;
-        private Panel panelStatus = null!;
-        private Label lblModelStatus = null!;
-        private ProgressBar progressModel = null!;
+        private Panel pnlHeader = null!;
+        private Label lblTitle = null!, lblSub = null!;
+        private Button btnTheme = null!;
+        private Panel pnlStatus = null!;
+        private Label lblStatus = null!;
+        private ProgressBar pbModel = null!;
+        private TabControl tcMain = null!;
 
-        // Tab 1 - Single Analysis
-        private Panel panelSingleBg = null!;
-        private RichTextBox txtInput = null!;
-        private Button btnAnalyze = null!;
-        private Button btnClear = null!;
-        private Panel panelResult = null!;
-        private Label lblResultSentiment = null!;
-        private Label lblResultConfidence = null!;
-        private Label lblResultLanguage = null!;
-        private Label lblResultTranslated = null!;
-        private PictureBox picSentimentIcon = null!;
+        // Tab1
+        private Panel pnl1 = null!;
+        private RichTextBox rtbInput = null!;
+        private Button btnAnalyze = null!, btnClear = null!;
+        private Panel pnlResult = null!;
+        private Label lblSentiment = null!, lblConf = null!, lblLang = null!, lblTrans = null!;
 
-        // Tab 2 - Bulk Analysis
-        private Panel panelBulkBg = null!;
-        private Label lblSelectedFile = null!;
-        private Button btnBrowseCSV = null!;
-        private Button btnAnalyzeBulk = null!;
-        private ProgressBar progressBulk = null!;
-        private Label lblBulkProgress = null!;
-        private Panel panelStats = null!;
-        private Label lblTotal = null!;
-        private Label lblPositive = null!;
-        private Label lblNegative = null!;
-        private Label lblSkipped = null!;
-        private Label lblMood = null!;
-        private Label lblTopPos = null!;
-        private Label lblTopNeg = null!;
-        private DataGridView gridResults = null!;
+        // Tab2
+        private Panel pnl2 = null!;
+        private Label lblFile = null!;
+        private Button btnBrowse = null!, btnAnalyzeBulk = null!;
+        private ProgressBar pbBulk = null!;
+        private Label lblProgress = null!;
+        private Panel pnlStats = null!;
+        private Label lblTotal = null!, lblPos = null!, lblNeg = null!, lblSkip = null!, lblMood = null!;
+        private Label lblTopPos = null!, lblTopNeg = null!;
+        private DataGridView dgvResults = null!;
 
-        // Tab 3 - Charts
-        private Panel panelChartsBg = null!;
-        private Panel panelPieChart = null!;
-        private Panel panelBarChart = null!;
+        // Tab3
+        private Panel pnlPie = null!, pnlBar = null!;
 
-        // Tab 4 - Export
-        private Panel panelExportBg = null!;
-        private Button btnExportCSV = null!;
-        private Button btnExportPDF = null!;
-        private RichTextBox txtExportLog = null!;
+        // Tab4
+        private Button btnExportCsv = null!, btnExportPdf = null!;
+        private RichTextBox rtbLog = null!;
 
         public MainForm()
         {
             _sentimentService = new SentimentService();
             InitializeComponent();
-            ApplyTheme();
             InitModelAsync();
         }
 
         private void InitializeComponent()
         {
-            this.Text = "Sentiment Analyzer Pro";
-            this.Size = new Size(1100, 780);
-            this.MinimumSize = new Size(900, 650);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Font = new Font("Segoe UI", 9.5f);
-            this.BackColor = _darkBg;
+            Text = "Sentiment Analyzer Pro";
+            Size = new Size(1150, 820);
+            MinimumSize = new Size(950, 700);
+            StartPosition = FormStartPosition.CenterScreen;
+            Font = new Font("Segoe UI", 9.5f);
+            BackColor = BgColor;
+            DoubleBuffered = true;
 
-            BuildHeader();
-            BuildStatusBar();
-            BuildTabControl();
-
-            this.Controls.Add(tabMain);
-            this.Controls.Add(panelStatus);
-            this.Controls.Add(panelHeader);
+            // IMPORTANT: Build in this order for correct Dock layout
+            // Fill must be added FIRST, then Top panels on top of it
+            BuildTabs();       // Fill - add first
+            BuildStatusBar();  // Top - add second
+            BuildHeader();     // Top - add last (appears at very top)
         }
 
+        // ============================================================
+        // HEADER
+        // ============================================================
         private void BuildHeader()
         {
-            panelHeader = new Panel
+            pnlHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 80,
-                BackColor = _darkPanel,
+                Height = 75,
+                BackColor = PanelColor,
                 Padding = new Padding(20, 0, 20, 0)
             };
 
             lblTitle = new Label
             {
-                Text = "🧠 Sentiment Analyzer Pro",
-                Font = new Font("Segoe UI", 20f, FontStyle.Bold),
-                ForeColor = _textLight,
-                Location = new Point(20, 12),
+                Text = "🧠  Sentiment Analyzer Pro",
+                Font = new Font("Segoe UI", 19f, FontStyle.Bold),
+                ForeColor = TextColor,
+                Location = new Point(20, 10),
                 AutoSize = true
             };
 
-            lblSubtitle = new Label
+            lblSub = new Label
             {
-                Text = "Multi-Language AI-Powered Sentiment Analysis  •  Powered by ML.NET",
+                Text = "Multi-Language AI Sentiment Analysis  •  Powered by ML.NET",
                 Font = new Font("Segoe UI", 9f),
-                ForeColor = _textMuted,
-                Location = new Point(22, 50),
+                ForeColor = MutedColor,
+                Location = new Point(22, 47),
                 AutoSize = true
             };
 
-            btnToggleTheme = new Button
+            btnTheme = new Button
             {
-                Text = "☀ Light Mode",
-                Size = new Size(120, 35),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Location = new Point(this.Width - 160, 22),
+                Text = "☀  Light Mode",
+                Size = new Size(130, 36),
                 FlatStyle = FlatStyle.Flat,
-                ForeColor = _textLight,
-                BackColor = _darkCard,
-                Cursor = Cursors.Hand
+                ForeColor = TextColor,
+                BackColor = CardColor,
+                Cursor = Cursors.Hand,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            btnToggleTheme.FlatAppearance.BorderColor = _accent;
-            btnToggleTheme.Click += BtnToggleTheme_Click;
+            btnTheme.FlatAppearance.BorderColor = BorderColor;
+            btnTheme.FlatAppearance.BorderSize = 1;
+            btnTheme.Click += (s, e) => ToggleTheme();
 
-            panelHeader.Controls.AddRange(new Control[] { lblTitle, lblSubtitle, btnToggleTheme });
-            panelHeader.Resize += (s, e) =>
-            {
-                btnToggleTheme.Location = new Point(panelHeader.Width - 150, 22);
-            };
+            pnlHeader.Controls.AddRange(new Control[] { lblTitle, lblSub, btnTheme });
+            pnlHeader.Resize += (s, e) =>
+                btnTheme.Location = new Point(pnlHeader.Width - 150, 19);
+            btnTheme.Location = new Point(970, 19);
+
+            Controls.Add(pnlHeader);
         }
 
+        // ============================================================
+        // STATUS BAR
+        // ============================================================
         private void BuildStatusBar()
         {
-            panelStatus = new Panel
+            pnlStatus = new Panel
             {
+                Height = 42,
+                BackColor = CardColor,
                 Dock = DockStyle.Top,
-                Height = 45,
-                BackColor = _darkCard,
-                Padding = new Padding(20, 5, 20, 5)
+                Padding = new Padding(15, 0, 15, 0)
             };
-            panelStatus.Location = new Point(0, 80);
 
-            progressModel = new ProgressBar
+            pbModel = new ProgressBar
             {
                 Style = ProgressBarStyle.Marquee,
-                MarqueeAnimationSpeed = 30,
-                Location = new Point(20, 12),
-                Size = new Size(200, 20),
-                BackColor = _darkBg
+                MarqueeAnimationSpeed = 25,
+                Location = new Point(15, 12),
+                Size = new Size(180, 18),
+                BackColor = BgColor
             };
 
-            lblModelStatus = new Label
+            lblStatus = new Label
             {
-                Text = "⏳ Initializing model...",
-                ForeColor = _accent,
-                Font = new Font("Segoe UI", 9f),
-                Location = new Point(230, 13),
+                Text = "⏳  Initializing model...",
+                ForeColor = AccentColor,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Location = new Point(205, 13),
                 AutoSize = true
             };
 
-            panelStatus.Controls.AddRange(new Control[] { progressModel, lblModelStatus });
+            pnlStatus.Controls.AddRange(new Control[] { pbModel, lblStatus });
+            Controls.Add(pnlStatus);
         }
 
-        private void BuildTabControl()
+        // ============================================================
+        // TABS
+        // ============================================================
+        private void BuildTabs()
         {
-            tabMain = new TabControl
+            tcMain = new TabControl
             {
                 Dock = DockStyle.Fill,
-                Padding = new Point(15, 8),
-                Font = new Font("Segoe UI", 10f)
+                Font = new Font("Segoe UI", 10f),
+                Padding = new Point(16, 8)
             };
-            tabMain.Location = new Point(0, 125);
 
-            var tab1 = new TabPage("📝  Single Analysis");
-            var tab2 = new TabPage("📂  Bulk CSV Analysis");
-            var tab3 = new TabPage("📊  Charts");
-            var tab4 = new TabPage("💾  Export");
+            var t1 = new TabPage("  📝  Single Analysis  ");
+            var t2 = new TabPage("  📂  Bulk CSV Analysis  ");
+            var t3 = new TabPage("  📊  Charts  ");
+            var t4 = new TabPage("  💾  Export  ");
 
-            BuildTab1(tab1);
-            BuildTab2(tab2);
-            BuildTab3(tab3);
-            BuildTab4(tab4);
+            BuildTab1(t1);
+            BuildTab2(t2);
+            BuildTab3(t3);
+            BuildTab4(t4);
 
-            tabMain.TabPages.AddRange(new[] { tab1, tab2, tab3, tab4 });
+            tcMain.TabPages.AddRange(new[] { t1, t2, t3, t4 });
+            Controls.Add(tcMain);
         }
 
+        // ============================================================
+        // TAB 1 - SINGLE ANALYSIS
+        // ============================================================
         private void BuildTab1(TabPage tab)
         {
-            panelSingleBg = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            tab.BackColor = BgColor;
+            pnl1 = new Panel { Dock = DockStyle.Fill, Padding = new Padding(25) };
+            pnl1.BackColor = BgColor;
 
-            // Input group
-            var lblInputTitle = MakeLabel("Enter Text to Analyze:", 0, 10, 16f, FontStyle.Bold);
-            var lblInputHint = MakeLabel("Supports all languages — auto-detect & translate enabled 🌍", 0, 38, 9f);
-            lblInputHint.ForeColor = _textMuted;
+            var lbl1 = MkLabel("Enter Text to Analyze:", 0, 15, 15f, FontStyle.Bold);
+            var lbl2 = MkLabel("🌍  Supports 30+ languages — auto-detect enabled", 2, 45, 9f);
+            lbl2.ForeColor = MutedColor;
 
-            txtInput = new RichTextBox
+            rtbInput = new RichTextBox
             {
-                Location = new Point(0, 65),
-                Size = new Size(900, 140),
-                BackColor = _darkCard,
-                ForeColor = _textLight,
+                Location = new Point(0, 72),
+                Size = new Size(1060, 150),
+                BackColor = CardColor,
+                ForeColor = TextColor,
                 Font = new Font("Segoe UI", 11f),
                 BorderStyle = BorderStyle.None,
-                Padding = new Padding(10),
+                Padding = new Padding(12),
                 ScrollBars = RichTextBoxScrollBars.Vertical
             };
 
-            btnAnalyze = MakeButton("🔍  Analyze Sentiment", 0, 220, _accent);
-            btnAnalyze.Size = new Size(200, 45);
+            btnAnalyze = MkBtn("🔍  Analyze Sentiment", 0, 238, AccentColor);
+            btnAnalyze.Size = new Size(210, 46);
             btnAnalyze.Click += BtnAnalyze_Click;
 
-            btnClear = MakeButton("✕  Clear", 215, 220, _darkCard);
-            btnClear.Size = new Size(100, 45);
-            btnClear.Click += (s, e) => { txtInput.Clear(); ResetResultPanel(); };
+            btnClear = MkBtn("✕  Clear", 220, 238, CardColor);
+            btnClear.Size = new Size(100, 46);
+            btnClear.FlatAppearance.BorderColor = BorderColor;
+            btnClear.FlatAppearance.BorderSize = 1;
+            btnClear.Click += (s, e) => { rtbInput.Clear(); pnlResult.Visible = false; };
 
             // Result panel
-            panelResult = new Panel
+            pnlResult = new Panel
             {
-                Location = new Point(0, 285),
-                Size = new Size(900, 180),
-                BackColor = _darkCard,
+                Location = new Point(0, 305),
+                Size = new Size(1060, 180),
+                BackColor = CardColor,
                 Visible = false
             };
-            RoundPanel(panelResult);
 
-            picSentimentIcon = new PictureBox
+            lblSentiment = new Label
             {
-                Location = new Point(20, 20),
-                Size = new Size(80, 80),
-                SizeMode = PictureBoxSizeMode.StretchImage
+                Location = new Point(20, 25),
+                Size = new Size(500, 52),
+                Font = new Font("Segoe UI", 26f, FontStyle.Bold),
+                ForeColor = GreenColor
             };
 
-            lblResultSentiment = new Label
+            lblConf = new Label
             {
-                Location = new Point(115, 20),
-                Size = new Size(300, 45),
-                Font = new Font("Segoe UI", 22f, FontStyle.Bold),
-                ForeColor = _accentGreen
-            };
-
-            lblResultConfidence = new Label
-            {
-                Location = new Point(115, 70),
-                Size = new Size(300, 28),
+                Location = new Point(22, 82),
+                Size = new Size(400, 30),
                 Font = new Font("Segoe UI", 13f),
-                ForeColor = _textMuted
+                ForeColor = MutedColor
             };
 
-            lblResultLanguage = new Label
+            lblLang = new Label
             {
-                Location = new Point(115, 100),
-                Size = new Size(400, 25),
-                Font = new Font("Segoe UI", 9.5f),
-                ForeColor = _textMuted
+                Location = new Point(22, 115),
+                Size = new Size(600, 26),
+                Font = new Font("Segoe UI", 10f),
+                ForeColor = MutedColor
             };
 
-            lblResultTranslated = new Label
+            lblTrans = new Label
             {
-                Location = new Point(20, 140),
-                Size = new Size(860, 30),
+                Location = new Point(22, 148),
+                Size = new Size(1000, 24),
                 Font = new Font("Segoe UI", 9f, FontStyle.Italic),
-                ForeColor = _textMuted
+                ForeColor = MutedColor
             };
 
-            panelResult.Controls.AddRange(new Control[] {
-                picSentimentIcon, lblResultSentiment,
-                lblResultConfidence, lblResultLanguage, lblResultTranslated
-            });
+            pnlResult.Controls.AddRange(new Control[]
+                { lblSentiment, lblConf, lblLang, lblTrans });
 
-            panelSingleBg.Controls.AddRange(new Control[] {
-                lblInputTitle, lblInputHint, txtInput,
-                btnAnalyze, btnClear, panelResult
-            });
+            pnl1.Controls.AddRange(new Control[]
+                { lbl1, lbl2, rtbInput, btnAnalyze, btnClear, pnlResult });
 
-            tab.Controls.Add(panelSingleBg);
+            tab.Controls.Add(pnl1);
         }
 
+        // ============================================================
+        // TAB 2 - BULK ANALYSIS
+        // ============================================================
         private void BuildTab2(TabPage tab)
         {
-            panelBulkBg = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            tab.BackColor = BgColor;
+            pnl2 = new Panel { Dock = DockStyle.Fill, Padding = new Padding(25) };
+            pnl2.BackColor = BgColor;
 
-            // File selection
-            var lblFileTitle = MakeLabel("Select CSV File with Comments:", 0, 10, 14f, FontStyle.Bold);
+            var lbl = MkLabel("Select CSV File with Comments:", 0, 12, 14f, FontStyle.Bold);
 
-            lblSelectedFile = MakeLabel("No file selected...", 0, 42);
-            lblSelectedFile.ForeColor = _textMuted;
-            lblSelectedFile.Size = new Size(600, 25);
+            lblFile = MkLabel("No file selected...", 0, 44, 9.5f);
+            lblFile.ForeColor = MutedColor;
+            lblFile.Size = new Size(700, 24);
 
-            btnBrowseCSV = MakeButton("📁  Browse CSV", 0, 70, _darkCard);
-            btnBrowseCSV.Size = new Size(160, 40);
-            btnBrowseCSV.Click += BtnBrowseCSV_Click;
+            btnBrowse = MkBtn("📁  Browse CSV", 0, 72, CardColor);
+            btnBrowse.Size = new Size(160, 42);
+            btnBrowse.FlatAppearance.BorderColor = AccentColor;
+            btnBrowse.FlatAppearance.BorderSize = 1;
+            btnBrowse.Click += BtnBrowse_Click;
 
-            btnAnalyzeBulk = MakeButton("▶  Analyze All", 175, 70, _accent);
-            btnAnalyzeBulk.Size = new Size(160, 40);
+            btnAnalyzeBulk = MkBtn("▶  Analyze All", 172, 72, AccentColor);
+            btnAnalyzeBulk.Size = new Size(160, 42);
             btnAnalyzeBulk.Enabled = false;
             btnAnalyzeBulk.Click += BtnAnalyzeBulk_Click;
 
-            progressBulk = new ProgressBar
+            pbBulk = new ProgressBar
             {
-                Location = new Point(0, 125),
-                Size = new Size(900, 22),
-                BackColor = _darkCard,
-                ForeColor = _accent,
+                Location = new Point(0, 130),
+                Size = new Size(1060, 20),
+                ForeColor = AccentColor,
+                BackColor = CardColor,
                 Visible = false
             };
 
-            lblBulkProgress = MakeLabel("", 0, 150);
-            lblBulkProgress.ForeColor = _textMuted;
+            lblProgress = MkLabel("", 0, 156, 9f);
+            lblProgress.ForeColor = MutedColor;
+            lblProgress.Size = new Size(700, 22);
 
             // Stats panel
-            panelStats = new Panel
+            pnlStats = new Panel
             {
-                Location = new Point(0, 175),
-                Size = new Size(900, 130),
-                BackColor = _darkCard,
+                Location = new Point(0, 180),
+                Size = new Size(1060, 110),
+                BackColor = CardColor,
                 Visible = false
             };
-            RoundPanel(panelStats);
 
-            lblTotal = MakeStat("Total", "0", 20, panelStats);
-            lblPositive = MakeStat("✅ Positive", "0", 200, panelStats);
-            lblNegative = MakeStat("❌ Negative", "0", 380, panelStats);
-            lblSkipped = MakeStat("⚠ Skipped", "0", 560, panelStats);
-            lblMood = MakeStat("Overall Mood", "—", 720, panelStats);
+            // Stat boxes
+            lblTotal = MkStatBox("Total", "0", 15, pnlStats);
+            lblPos   = MkStatBox("✅  Positive", "0", 225, pnlStats);
+            lblNeg   = MkStatBox("❌  Negative", "0", 435, pnlStats);
+            lblSkip  = MkStatBox("⚠  Skipped", "0", 645, pnlStats);
+            lblMood  = MkStatBox("Overall Mood", "—", 855, pnlStats);
 
             lblTopPos = new Label
             {
-                Location = new Point(20, 90),
-                Size = new Size(400, 25),
+                Location = new Point(15, 82),
+                Size = new Size(500, 22),
                 Font = new Font("Segoe UI", 9f),
-                ForeColor = _textMuted
+                ForeColor = MutedColor
             };
             lblTopNeg = new Label
             {
-                Location = new Point(450, 90),
-                Size = new Size(400, 25),
+                Location = new Point(535, 82),
+                Size = new Size(500, 22),
                 Font = new Font("Segoe UI", 9f),
-                ForeColor = _textMuted
+                ForeColor = MutedColor
             };
-            panelStats.Controls.AddRange(new Control[] { lblTopPos, lblTopNeg });
+            pnlStats.Controls.AddRange(new Control[] { lblTopPos, lblTopNeg });
 
             // Results grid
-            gridResults = new DataGridView
+            dgvResults = new DataGridView
             {
-                Location = new Point(0, 315),
-                Size = new Size(900, 280),
-                BackgroundColor = _darkCard,
-                ForeColor = _textLight,
-                GridColor = _darkPanel,
+                Location = new Point(0, 300),
+                BackgroundColor = CardColor,
+                ForeColor = TextColor,
+                GridColor = BorderColor,
                 BorderStyle = BorderStyle.None,
                 ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = _darkPanel,
-                    ForeColor = _textLight,
-                    Font = new Font("Segoe UI", 9f, FontStyle.Bold),
-                    Padding = new Padding(5)
+                    BackColor = Color.FromArgb(50, 50, 80),
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                    Padding = new Padding(6)
                 },
                 DefaultCellStyle = new DataGridViewCellStyle
                 {
-                    BackColor = _darkCard,
-                    ForeColor = _textLight,
-                    SelectionBackColor = _accent,
-                    SelectionForeColor = Color.White
+                    BackColor = CardColor,
+                    ForeColor = TextColor,
+                    SelectionBackColor = AccentColor,
+                    SelectionForeColor = Color.White,
+                    Padding = new Padding(4)
+                },
+                AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+                {
+                    BackColor = _isDarkMode
+                        ? Color.FromArgb(30, 30, 50)
+                        : Color.FromArgb(242, 244, 255),
+                    ForeColor = TextColor
                 },
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
                 RowHeadersVisible = false,
                 AllowUserToAddRows = false,
-                Visible = false
+                AllowUserToResizeRows = false,
+                ColumnHeadersHeightSizeMode =
+                    DataGridViewColumnHeadersHeightSizeMode.EnableResizing,
+                ColumnHeadersHeight = 38,
+                RowTemplate = { Height = 32 },
+                Visible = false,
+                ScrollBars = ScrollBars.Both
             };
 
-            gridResults.Columns.Add("text", "Comment");
-            gridResults.Columns.Add("lang", "Language");
-            gridResults.Columns.Add("sentiment", "Sentiment");
-            gridResults.Columns.Add("confidence", "Confidence");
-            gridResults.Columns.Add("status", "Status");
-            gridResults.Columns[0].FillWeight = 45;
-            gridResults.Columns[1].FillWeight = 15;
-            gridResults.Columns[2].FillWeight = 15;
-            gridResults.Columns[3].FillWeight = 15;
-            gridResults.Columns[4].FillWeight = 10;
+            dgvResults.Columns.Add(new DataGridViewTextBoxColumn
+                { Name = "col_text", HeaderText = "Comment", FillWeight = 42 });
+            dgvResults.Columns.Add(new DataGridViewTextBoxColumn
+                { Name = "col_lang", HeaderText = "Language", FillWeight = 13 });
+            dgvResults.Columns.Add(new DataGridViewTextBoxColumn
+                { Name = "col_sent", HeaderText = "Sentiment", FillWeight = 13 });
+            dgvResults.Columns.Add(new DataGridViewTextBoxColumn
+                { Name = "col_conf", HeaderText = "Confidence", FillWeight = 13 });
+            dgvResults.Columns.Add(new DataGridViewTextBoxColumn
+                { Name = "col_stat", HeaderText = "Status", FillWeight = 10 });
 
-            panelBulkBg.Controls.AddRange(new Control[] {
-                lblFileTitle, lblSelectedFile, btnBrowseCSV, btnAnalyzeBulk,
-                progressBulk, lblBulkProgress, panelStats, gridResults
+            // Auto resize grid with form
+            pnl2.Resize += (s, e) =>
+            {
+                int w = pnl2.Width - 50;
+                int h = pnl2.Height - 310;
+                if (w > 200 && h > 100)
+                    dgvResults.Size = new Size(w, h);
+            };
+
+            pnl2.Controls.AddRange(new Control[]
+            {
+                lbl, lblFile, btnBrowse, btnAnalyzeBulk,
+                pbBulk, lblProgress, pnlStats, dgvResults
             });
 
-            tab.Controls.Add(panelBulkBg);
+            tab.Controls.Add(pnl2);
         }
 
+        // ============================================================
+        // TAB 3 - CHARTS
+        // ============================================================
         private void BuildTab3(TabPage tab)
         {
-            panelChartsBg = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            tab.BackColor = BgColor;
+            var pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(25) };
+            pnl.BackColor = BgColor;
 
-            var lblChartTitle = MakeLabel("Analysis Charts", 0, 10, 16f, FontStyle.Bold);
-            var lblChartHint = MakeLabel("Run a Bulk CSV Analysis first to see charts here.", 0, 42);
-            lblChartHint.ForeColor = _textMuted;
-            lblChartHint.Name = "lblChartHint";
+            var lbl = MkLabel("Sentiment Charts", 0, 12, 15f, FontStyle.Bold);
+            var hint = MkLabel("Run Bulk CSV Analysis first to see charts.", 2, 44, 9f);
+            hint.ForeColor = MutedColor;
+            hint.Name = "lblChartHint";
 
-            panelPieChart = new Panel
+            pnlPie = new Panel
             {
                 Location = new Point(0, 75),
-                Size = new Size(430, 430),
-                BackColor = _darkCard
+                Size = new Size(470, 470),
+                BackColor = CardColor
             };
-            RoundPanel(panelPieChart);
-            panelPieChart.Paint += PanelPieChart_Paint;
+            pnlPie.Paint += PnlPie_Paint;
 
-            panelBarChart = new Panel
+            pnlBar = new Panel
             {
-                Location = new Point(450, 75),
-                Size = new Size(430, 430),
-                BackColor = _darkCard
+                Location = new Point(490, 75),
+                Size = new Size(470, 470),
+                BackColor = CardColor
             };
-            RoundPanel(panelBarChart);
-            panelBarChart.Paint += PanelBarChart_Paint;
+            pnlBar.Paint += PnlBar_Paint;
 
-            panelChartsBg.Controls.AddRange(new Control[] {
-                lblChartTitle, lblChartHint, panelPieChart, panelBarChart
-            });
-
-            tab.Controls.Add(panelChartsBg);
+            pnl.Controls.AddRange(new Control[] { lbl, hint, pnlPie, pnlBar });
+            tab.Controls.Add(pnl);
         }
 
+        // ============================================================
+        // TAB 4 - EXPORT
+        // ============================================================
         private void BuildTab4(TabPage tab)
         {
-            panelExportBg = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            tab.BackColor = BgColor;
+            var pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(25) };
+            pnl.BackColor = BgColor;
 
-            var lblExportTitle = MakeLabel("Export Results", 0, 10, 16f, FontStyle.Bold);
-            var lblHint = MakeLabel("Export your analysis results in different formats.", 0, 42);
-            lblHint.ForeColor = _textMuted;
+            var lbl = MkLabel("Export Results", 0, 12, 15f, FontStyle.Bold);
+            var hint = MkLabel("Export your analysis results after running Bulk CSV Analysis.", 2, 44, 9f);
+            hint.ForeColor = MutedColor;
 
-            btnExportCSV = MakeButton("📄  Export to CSV", 0, 80, _accentGreen);
-            btnExportCSV.Size = new Size(200, 50);
-            btnExportCSV.Click += BtnExportCSV_Click;
+            // CSV button
+            btnExportCsv = MkBtn("📄  Export to CSV", 0, 85, GreenColor);
+            btnExportCsv.Size = new Size(210, 52);
+            btnExportCsv.Font = new Font("Segoe UI", 10.5f, FontStyle.Bold);
+            btnExportCsv.Click += BtnExportCsv_Click;
 
-            btnExportPDF = MakeButton("📋  Export PDF Report", 220, 80, _accent);
-            btnExportPDF.Size = new Size(200, 50);
-            btnExportPDF.Click += BtnExportPDF_Click;
+            // PDF button
+            btnExportPdf = MkBtn("📋  Export PDF Report", 225, 85, AccentColor);
+            btnExportPdf.Size = new Size(210, 52);
+            btnExportPdf.Font = new Font("Segoe UI", 10.5f, FontStyle.Bold);
+            btnExportPdf.Click += BtnExportPdf_Click;
 
-            txtExportLog = new RichTextBox
+            // Info box
+            var infoPanel = new Panel
             {
                 Location = new Point(0, 155),
-                Size = new Size(900, 200),
-                BackColor = _darkCard,
-                ForeColor = _accentGreen,
-                Font = new Font("Consolas", 9.5f),
-                BorderStyle = BorderStyle.None,
-                ReadOnly = true
+                Size = new Size(700, 80),
+                BackColor = CardColor
             };
 
-            panelExportBg.Controls.AddRange(new Control[] {
-                lblExportTitle, lblHint, btnExportCSV, btnExportPDF, txtExportLog
-            });
+            var infoLbl = new Label
+            {
+                Text = "ℹ  CSV Export: Saves all comments with language, sentiment and confidence.\r\n" +
+                       "ℹ  PDF Report: Generates a professional formatted report with summary table.",
+                Location = new Point(15, 12),
+                Size = new Size(670, 55),
+                Font = new Font("Segoe UI", 9.5f),
+                ForeColor = MutedColor
+            };
+            infoPanel.Controls.Add(infoLbl);
 
-            tab.Controls.Add(panelExportBg);
+            // Log
+            rtbLog = new RichTextBox
+            {
+                Location = new Point(0, 255),
+                Size = new Size(1060, 200),
+                BackColor = CardColor,
+                ForeColor = GreenColor,
+                Font = new Font("Consolas", 9.5f),
+                BorderStyle = BorderStyle.None,
+                ReadOnly = true,
+                ScrollBars = RichTextBoxScrollBars.Vertical
+            };
+
+            pnl.Controls.AddRange(new Control[]
+                { lbl, hint, btnExportCsv, btnExportPdf, infoPanel, rtbLog });
+            tab.Controls.Add(pnl);
         }
 
-        // ===================== EVENT HANDLERS =====================
-
+        // ============================================================
+        // MODEL INIT
+        // ============================================================
         private async void InitModelAsync()
         {
-            var progress = new Progress<string>(msg =>
-            {
-                lblModelStatus.Text = $"⏳ {msg}";
-            });
-
+            var progress = new Progress<string>(msg => lblStatus.Text = $"⏳  {msg}");
             var result = await _sentimentService.InitializeAsync(progress);
 
-            progressModel.Visible = false;
+            pbModel.Visible = false;
             if (_sentimentService.IsReady)
             {
-                lblModelStatus.Text = "✅ Model ready!  " + result;
-                lblModelStatus.ForeColor = _accentGreen;
+                lblStatus.Text = "✅  Model ready!  " + result;
+                lblStatus.ForeColor = GreenColor;
             }
             else
             {
-                lblModelStatus.Text = "❌ " + result;
-                lblModelStatus.ForeColor = _accentRed;
+                lblStatus.Text = "❌  " + result;
+                lblStatus.ForeColor = RedColor;
             }
         }
 
+        // ============================================================
+        // ANALYZE SINGLE
+        // ============================================================
         private async void BtnAnalyze_Click(object? sender, EventArgs e)
         {
             if (!_sentimentService.IsReady)
             {
-                MessageBox.Show("Model is still loading. Please wait.", "Not Ready", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Model is still loading. Please wait.",
+                    "Not Ready", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string text = txtInput.Text.Trim();
+            string text = rtbInput.Text.Trim();
             if (string.IsNullOrEmpty(text))
             {
-                MessageBox.Show("Please enter some text to analyze.", "Empty Input", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Please enter some text.",
+                    "Empty", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             btnAnalyze.Enabled = false;
             btnAnalyze.Text = "⏳  Analyzing...";
-            panelResult.Visible = false;
+            pnlResult.Visible = false;
 
             var result = await _sentimentService.AnalyzeSingleAsync(text);
 
-            ShowSingleResult(result);
+            // Show result
+            if (result.Status == "Skipped")
+            {
+                lblSentiment.Text = "⚠  SKIPPED";
+                lblSentiment.ForeColor = Color.Orange;
+                lblConf.Text = result.StatusReason;
+                lblLang.Text = "";
+                lblTrans.Text = "";
+            }
+            else
+            {
+                lblSentiment.Text = result.IsPositive ? "✅  POSITIVE" : "❌  NEGATIVE";
+                lblSentiment.ForeColor = result.IsPositive ? GreenColor : RedColor;
+                lblConf.Text = $"Confidence:  {result.ConfidencePercent}";
 
+                string langName = TranslationService.LanguageNames
+                    .TryGetValue(result.DetectedLanguage, out var n) ? n : result.DetectedLanguage;
+                lblLang.Text = $"Detected Language:  {langName}";
+
+                lblTrans.Text = result.DetectedLanguage != "en" && !string.IsNullOrEmpty(result.TranslatedText)
+                    ? $"Translated:  \"{result.TranslatedText}\""
+                    : "";
+            }
+
+            pnlResult.Visible = true;
             btnAnalyze.Enabled = true;
             btnAnalyze.Text = "🔍  Analyze Sentiment";
         }
 
-        private void ShowSingleResult(AnalysisResult result)
+        // ============================================================
+        // BULK BROWSE
+        // ============================================================
+        private void BtnBrowse_Click(object? sender, EventArgs e)
         {
-            if (result.Status == "Skipped")
+            using var dlg = new OpenFileDialog
             {
-                lblResultSentiment.Text = "⚠ SKIPPED";
-                lblResultSentiment.ForeColor = Color.Orange;
-                lblResultConfidence.Text = result.StatusReason;
-                lblResultLanguage.Text = "";
-                lblResultTranslated.Text = "";
-            }
-            else
-            {
-                lblResultSentiment.Text = result.IsPositive ? "✅ POSITIVE" : "❌ NEGATIVE";
-                lblResultSentiment.ForeColor = result.IsPositive ? _accentGreen : _accentRed;
-                lblResultConfidence.Text = $"Confidence: {result.ConfidencePercent}";
-
-                string langName = TranslationService.LanguageNames.TryGetValue(result.DetectedLanguage, out var n) ? n : result.DetectedLanguage;
-                lblResultLanguage.Text = $"Detected Language: {langName}";
-
-                if (result.DetectedLanguage != "en")
-                    lblResultTranslated.Text = $"Translated: \"{result.TranslatedText}\"";
-                else
-                    lblResultTranslated.Text = "";
-            }
-
-            panelResult.Visible = true;
-        }
-
-        private void BtnBrowseCSV_Click(object? sender, EventArgs e)
-        {
-            using var dialog = new OpenFileDialog
-            {
-                Title = "Select CSV file with comments",
+                Title = "Select CSV file",
                 Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*"
             };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK)
             {
-                lblSelectedFile.Text = dialog.FileName;
-                lblSelectedFile.ForeColor = _textLight;
+                lblFile.Text = dlg.FileName;
+                lblFile.ForeColor = TextColor;
                 btnAnalyzeBulk.Enabled = true;
-                btnAnalyzeBulk.Tag = dialog.FileName;
+                btnAnalyzeBulk.Tag = dlg.FileName;
             }
         }
 
+        // ============================================================
+        // BULK ANALYZE
+        // ============================================================
         private async void BtnAnalyzeBulk_Click(object? sender, EventArgs e)
         {
             if (!_sentimentService.IsReady)
             {
-                MessageBox.Show("Model is still loading.", "Not Ready", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Model is still loading.", "Not Ready",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string? csvPath = btnAnalyzeBulk.Tag?.ToString();
-            if (string.IsNullOrEmpty(csvPath) || !File.Exists(csvPath))
+            string? path = btnAnalyzeBulk.Tag?.ToString();
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
             {
-                MessageBox.Show("Please select a valid CSV file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please select a valid CSV file.", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             btnAnalyzeBulk.Enabled = false;
-            btnBrowseCSV.Enabled = false;
-            progressBulk.Visible = true;
-            progressBulk.Style = ProgressBarStyle.Continuous;
-            progressBulk.Value = 0;
-            gridResults.Rows.Clear();
-            gridResults.Visible = false;
-            panelStats.Visible = false;
+            btnBrowse.Enabled = false;
+            pbBulk.Visible = true;
+            pbBulk.Value = 0;
+            dgvResults.Rows.Clear();
+            dgvResults.Visible = false;
+            pnlStats.Visible = false;
 
             var progress = new Progress<(int current, int total, string message)>(p =>
             {
-                lblBulkProgress.Text = p.message;
+                lblProgress.Text = p.message;
                 if (p.total > 0)
                 {
-                    progressBulk.Maximum = p.total;
-                    progressBulk.Value = Math.Min(p.current, p.total);
+                    pbBulk.Maximum = p.total;
+                    pbBulk.Value = Math.Min(p.current, p.total);
                 }
             });
 
-            _lastBulkSummary = await _sentimentService.AnalyzeBulkAsync(csvPath, progress);
-
+            _lastBulkSummary = await _sentimentService.AnalyzeBulkAsync(path, progress);
             ShowBulkResults(_lastBulkSummary);
 
             btnAnalyzeBulk.Enabled = true;
-            btnBrowseCSV.Enabled = true;
-            progressBulk.Visible = false;
-            lblBulkProgress.Text = "✅ Analysis complete!";
+            btnBrowse.Enabled = true;
+            pbBulk.Visible = false;
+            lblProgress.Text = $"✅  Analysis complete! {_lastBulkSummary.AnalyzedCount} comments analyzed.";
         }
 
-        private void ShowBulkResults(BulkAnalysisSummary summary)
+        private void ShowBulkResults(BulkAnalysisSummary s)
         {
-            // Stats panel
-            UpdateStat(lblTotal, summary.TotalComments.ToString());
-            UpdateStat(lblPositive, $"{summary.PositiveCount} ({summary.PositivePercent:F0}%)");
-            UpdateStat(lblNegative, $"{summary.NegativeCount} ({summary.NegativePercent:F0}%)");
-            UpdateStat(lblSkipped, summary.SkippedCount.ToString());
-            UpdateStat(lblMood, summary.OverallMood);
-            lblTopPos.Text = $"🔝 Top Positive Word: \"{summary.TopPositiveWord}\"";
-            lblTopNeg.Text = $"🔝 Top Negative Word: \"{summary.TopNegativeWord}\"";
-            panelStats.Visible = true;
+            lblTotal.Text = s.TotalComments.ToString();
+            lblPos.Text = $"{s.PositiveCount}\n({s.PositivePercent:F0}%)";
+            lblNeg.Text = $"{s.NegativeCount}\n({s.NegativePercent:F0}%)";
+            lblSkip.Text = s.SkippedCount.ToString();
+            lblMood.Text = s.PositivePercent >= 50 ? "😊 POSITIVE" : "😞 NEGATIVE";
+            lblTopPos.Text = $"🔝 Top Positive Word: \"{s.TopPositiveWord}\"";
+            lblTopNeg.Text = $"🔝 Top Negative Word: \"{s.TopNegativeWord}\"";
+            pnlStats.Visible = true;
 
-            // Grid
-            gridResults.Rows.Clear();
-            foreach (var r in summary.Results)
+            dgvResults.Rows.Clear();
+            dgvResults.SuspendLayout();
+
+            foreach (var r in s.Results)
             {
-                string langName = TranslationService.LanguageNames.TryGetValue(r.DetectedLanguage, out var n) ? n : r.DetectedLanguage;
-                string shortText = r.OriginalText.Length > 60 ? r.OriginalText[..60] + "..." : r.OriginalText;
-                gridResults.Rows.Add(shortText, langName, r.SentimentLabel, r.ConfidencePercent, r.Status);
+                string lang = TranslationService.LanguageNames
+                    .TryGetValue(r.DetectedLanguage, out var n) ? n : r.DetectedLanguage;
+                string shortText = r.OriginalText.Length > 70
+                    ? r.OriginalText[..70] + "..." : r.OriginalText;
 
-                // Color rows
-                var row = gridResults.Rows[gridResults.Rows.Count - 1];
+                int idx = dgvResults.Rows.Add(shortText, lang, r.SentimentLabel,
+                    r.ConfidencePercent, r.Status);
+
+                var row = dgvResults.Rows[idx];
                 if (r.Status == "Analyzed")
-                    row.DefaultCellStyle.ForeColor = r.IsPositive ? _accentGreen : _accentRed;
+                    row.DefaultCellStyle.ForeColor = r.IsPositive ? GreenColor : RedColor;
                 else
                     row.DefaultCellStyle.ForeColor = Color.Orange;
             }
-            gridResults.Visible = true;
+
+            dgvResults.ResumeLayout();
+            dgvResults.Visible = true;
 
             // Refresh charts
-            panelPieChart.Invalidate();
-            panelBarChart.Invalidate();
+            pnlPie?.Invalidate();
+            pnlBar?.Invalidate();
         }
 
-        // ===================== CHARTS =====================
-
-        private void PanelPieChart_Paint(object? sender, PaintEventArgs e)
+        // ============================================================
+        // CHARTS
+        // ============================================================
+        private void PnlPie_Paint(object? sender, PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            var panel = (Panel)sender!;
+            var p = (Panel)sender!;
 
             if (_lastBulkSummary == null || _lastBulkSummary.AnalyzedCount == 0)
             {
-                DrawNoData(g, panel.ClientRectangle);
-                return;
+                DrawNoData(g, p.ClientRectangle); return;
             }
 
-            // Title
-            using var titleFont = new Font("Segoe UI", 12f, FontStyle.Bold);
-            g.DrawString("Sentiment Distribution", titleFont, new SolidBrush(_textLight), new PointF(20, 15));
+            using var titleFont = new Font("Segoe UI", 13f, FontStyle.Bold);
+            g.DrawString("Sentiment Distribution", titleFont,
+                new SolidBrush(TextColor), new PointF(20, 18));
 
             float total = _lastBulkSummary.AnalyzedCount;
-            float posAngle = (float)(_lastBulkSummary.PositiveCount / total * 360);
+            float posAngle = (float)(_lastBulkSummary.PositiveCount / total * 360f);
 
-            var rect = new RectangleF(60, 55, 280, 280);
+            var rect = new RectangleF(55, 55, 300, 300);
 
-            // Pie slices
-            using (var posBrush = new SolidBrush(_accentGreen))
-                g.FillPie(posBrush, rect.X, rect.Y, rect.Width, rect.Height, -90, posAngle);
-
-            using (var negBrush = new SolidBrush(_accentRed))
-                g.FillPie(negBrush, rect.X, rect.Y, rect.Width, rect.Height, -90 + posAngle, 360 - posAngle);
-
-            // Center hole (donut)
-            using (var holeBrush = new SolidBrush(_darkCard))
-                g.FillEllipse(holeBrush, rect.X + 70, rect.Y + 70, rect.Width - 140, rect.Height - 140);
+            using (var b = new SolidBrush(GreenColor))
+                g.FillPie(b, rect.X, rect.Y, rect.Width, rect.Height, -90, posAngle);
+            using (var b = new SolidBrush(RedColor))
+                g.FillPie(b, rect.X, rect.Y, rect.Width, rect.Height, -90 + posAngle, 360 - posAngle);
+            using (var b = new SolidBrush(CardColor))
+                g.FillEllipse(b, rect.X + 75, rect.Y + 75, rect.Width - 150, rect.Height - 150);
 
             // Center text
-            using var centerFont = new Font("Segoe UI", 14f, FontStyle.Bold);
+            using var cf = new Font("Segoe UI", 15f, FontStyle.Bold);
             string mood = _lastBulkSummary.PositivePercent >= 50 ? "😊" : "😞";
-            var centerStr = $"{mood}\n{_lastBulkSummary.PositivePercent:F0}% Pos";
-            g.DrawString(centerStr, centerFont, new SolidBrush(_textLight),
-                new RectangleF(rect.X + 75, rect.Y + 100, 140, 80),
+            g.DrawString($"{mood}", cf, new SolidBrush(TextColor),
+                new RectangleF(rect.X + 95, rect.Y + 95, 120, 50),
+                new StringFormat { Alignment = StringAlignment.Center });
+            g.DrawString($"{_lastBulkSummary.PositivePercent:F1}% Pos", cf,
+                new SolidBrush(GreenColor),
+                new RectangleF(rect.X + 70, rect.Y + 145, 170, 40),
                 new StringFormat { Alignment = StringAlignment.Center });
 
             // Legend
-            using var legendFont = new Font("Segoe UI", 10f);
-            g.FillRectangle(new SolidBrush(_accentGreen), 20, 360, 14, 14);
-            g.DrawString($"Positive: {_lastBulkSummary.PositiveCount}", legendFont, new SolidBrush(_textLight), 40, 357);
-
-            g.FillRectangle(new SolidBrush(_accentRed), 200, 360, 14, 14);
-            g.DrawString($"Negative: {_lastBulkSummary.NegativeCount}", legendFont, new SolidBrush(_textLight), 220, 357);
+            using var lf = new Font("Segoe UI", 10f);
+            g.FillRectangle(new SolidBrush(GreenColor), 20, 380, 14, 14);
+            g.DrawString($"Positive: {_lastBulkSummary.PositiveCount}",
+                lf, new SolidBrush(TextColor), 40, 377);
+            g.FillRectangle(new SolidBrush(RedColor), 215, 380, 14, 14);
+            g.DrawString($"Negative: {_lastBulkSummary.NegativeCount}",
+                lf, new SolidBrush(TextColor), 235, 377);
         }
 
-        private void PanelBarChart_Paint(object? sender, PaintEventArgs e)
+        private void PnlBar_Paint(object? sender, PaintEventArgs e)
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            var panel = (Panel)sender!;
+            var p = (Panel)sender!;
 
             if (_lastBulkSummary == null || _lastBulkSummary.AnalyzedCount == 0)
             {
-                DrawNoData(g, panel.ClientRectangle);
-                return;
+                DrawNoData(g, p.ClientRectangle); return;
             }
 
-            // Title
-            using var titleFont = new Font("Segoe UI", 12f, FontStyle.Bold);
-            g.DrawString("Comment Counts", titleFont, new SolidBrush(_textLight), new PointF(20, 15));
+            using var titleFont = new Font("Segoe UI", 13f, FontStyle.Bold);
+            g.DrawString("Comment Counts", titleFont,
+                new SolidBrush(TextColor), new PointF(20, 18));
 
-            float maxVal = Math.Max(_lastBulkSummary.PositiveCount, _lastBulkSummary.NegativeCount);
-            if (maxVal == 0) return;
+            float maxVal = Math.Max(
+                Math.Max(_lastBulkSummary.PositiveCount, _lastBulkSummary.NegativeCount),
+                Math.Max(_lastBulkSummary.SkippedCount, 1));
 
-            float chartH = 280f;
-            float baseY = 360f;
-            float barW = 100f;
+            float chartH = 300f, baseY = 390f, barW = 90f;
 
-            // Positive bar
-            float posH = (_lastBulkSummary.PositiveCount / maxVal) * chartH;
-            using (var br = new LinearGradientBrush(
-                new PointF(80, baseY - posH), new PointF(80, baseY),
-                _accentGreen, Color.FromArgb(20, 200, 80)))
+            void DrawBar(float x, float count, Color top, Color bottom, string label)
             {
-                g.FillRectangle(br, 80, baseY - posH, barW, posH);
+                float h = (count / maxVal) * chartH;
+                using var br = new LinearGradientBrush(
+                    new PointF(x, baseY - h), new PointF(x, baseY), top, bottom);
+                g.FillRectangle(br, x, baseY - h, barW, h);
+
+                using var vf = new Font("Segoe UI", 11f, FontStyle.Bold);
+                g.DrawString(((int)count).ToString(), vf, new SolidBrush(top),
+                    new PointF(x + barW / 2 - 15, baseY - h - 28));
+
+                using var lf = new Font("Segoe UI", 10f);
+                g.DrawString(label, lf, new SolidBrush(TextColor),
+                    new PointF(x + barW / 2 - 25, baseY + 8));
             }
-            using var valFont = new Font("Segoe UI", 11f, FontStyle.Bold);
-            g.DrawString(_lastBulkSummary.PositiveCount.ToString(), valFont,
-                new SolidBrush(_accentGreen), new PointF(115, baseY - posH - 28));
 
-            // Negative bar
-            float negH = (_lastBulkSummary.NegativeCount / maxVal) * chartH;
-            using (var br = new LinearGradientBrush(
-                new PointF(240, baseY - negH), new PointF(240, baseY),
-                _accentRed, Color.FromArgb(200, 30, 30)))
-            {
-                g.FillRectangle(br, 240, baseY - negH, barW, negH);
-            }
-            g.DrawString(_lastBulkSummary.NegativeCount.ToString(), valFont,
-                new SolidBrush(_accentRed), new PointF(275, baseY - negH - 28));
+            DrawBar(60, _lastBulkSummary.PositiveCount,
+                GreenColor, Color.FromArgb(20, 180, 70), "Positive");
+            DrawBar(200, _lastBulkSummary.NegativeCount,
+                RedColor, Color.FromArgb(180, 40, 40), "Negative");
 
-            // Baseline
-            using var basePen = new Pen(_textMuted, 1.5f);
-            g.DrawLine(basePen, 60, baseY, 380, baseY);
-
-            // Labels
-            using var labelFont = new Font("Segoe UI", 10f);
-            g.DrawString("Positive", labelFont, new SolidBrush(_accentGreen), 95, baseY + 10);
-            g.DrawString("Negative", labelFont, new SolidBrush(_accentRed), 252, baseY + 10);
-
-            // Skipped bar (if any)
             if (_lastBulkSummary.SkippedCount > 0)
-            {
-                float skipH = (_lastBulkSummary.SkippedCount / maxVal) * chartH;
-                g.FillRectangle(new SolidBrush(Color.Orange), 400, baseY - skipH, barW, skipH);
-                g.DrawString(_lastBulkSummary.SkippedCount.ToString(), valFont,
-                    new SolidBrush(Color.Orange), new PointF(435, baseY - skipH - 28));
-                g.DrawString("Skipped", labelFont, new SolidBrush(Color.Orange), 412, baseY + 10);
-            }
+                DrawBar(340, _lastBulkSummary.SkippedCount,
+                    Color.Orange, Color.FromArgb(180, 120, 0), "Skipped");
+
+            using var bp = new Pen(MutedColor, 1.5f);
+            g.DrawLine(bp, 40, baseY, 430, baseY);
         }
 
         private void DrawNoData(Graphics g, Rectangle rect)
         {
-            using var font = new Font("Segoe UI", 12f);
+            using var f = new Font("Segoe UI", 12f);
             g.DrawString("No data yet.\nRun Bulk Analysis first.",
-                font, new SolidBrush(_textMuted),
+                f, new SolidBrush(MutedColor),
                 new RectangleF(0, 0, rect.Width, rect.Height),
-                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                });
         }
 
-        // ===================== EXPORT =====================
-
-        private async void BtnExportCSV_Click(object? sender, EventArgs e)
+        // ============================================================
+        // EXPORT
+        // ============================================================
+        private async void BtnExportCsv_Click(object? sender, EventArgs e)
         {
             if (_lastBulkSummary == null)
             {
-                MessageBox.Show("Please run a Bulk Analysis first.", "No Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Run Bulk Analysis first.", "No Data",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
-            using var dialog = new SaveFileDialog
+            using var dlg = new SaveFileDialog
             {
-                Title = "Save CSV Results",
                 Filter = "CSV Files (*.csv)|*.csv",
                 FileName = $"sentiment_results_{DateTime.Now:yyyyMMdd_HHmm}.csv"
             };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK)
             {
-                await _sentimentService.ExportToCsvAsync(_lastBulkSummary, dialog.FileName);
-                txtExportLog.Text += $"[{DateTime.Now:HH:mm:ss}] ✅ CSV exported: {dialog.FileName}\n";
-                MessageBox.Show("CSV exported successfully!", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await _sentimentService.ExportToCsvAsync(_lastBulkSummary, dlg.FileName);
+                rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ✅ CSV exported: {dlg.FileName}\n");
+                MessageBox.Show("CSV exported successfully!", "Done",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
-        private void BtnExportPDF_Click(object? sender, EventArgs e)
+        private void BtnExportPdf_Click(object? sender, EventArgs e)
         {
             if (_lastBulkSummary == null)
             {
-                MessageBox.Show("Please run a Bulk Analysis first.", "No Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Run Bulk Analysis first.", "No Data",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
-            using var dialog = new SaveFileDialog
+            using var dlg = new SaveFileDialog
             {
-                Title = "Save PDF Report",
                 Filter = "PDF Files (*.pdf)|*.pdf",
                 FileName = $"sentiment_report_{DateTime.Now:yyyyMMdd_HHmm}.pdf"
             };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK)
             {
-                PdfExporter.Export(_lastBulkSummary, dialog.FileName);
-                txtExportLog.Text += $"[{DateTime.Now:HH:mm:ss}] ✅ PDF exported: {dialog.FileName}\n";
-                MessageBox.Show("PDF report exported successfully!", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                try
+                {
+                    PdfExporter.Export(_lastBulkSummary, dlg.FileName);
+                    rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ✅ PDF exported: {dlg.FileName}\n");
+                    MessageBox.Show("PDF report exported successfully!", "Done",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] ❌ PDF Error: {ex.Message}\n");
+                    MessageBox.Show($"PDF export failed:\n{ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ===================== THEME =====================
-
-        private void BtnToggleTheme_Click(object? sender, EventArgs e)
+        // ============================================================
+        // THEME TOGGLE - COMPLETE FIX
+        // ============================================================
+        private void ToggleTheme()
         {
             _isDarkMode = !_isDarkMode;
-            ApplyTheme();
-            btnToggleTheme.Text = _isDarkMode ? "☀ Light Mode" : "🌙 Dark Mode";
+            btnTheme.Text = _isDarkMode ? "☀  Light Mode" : "🌙  Dark Mode";
+            ApplyThemeToAll();
         }
 
-        private void ApplyTheme()
+        private void ApplyThemeToAll()
         {
-            if (_isDarkMode)
+            // Form
+            BackColor = BgColor;
+
+            // Header
+            pnlHeader.BackColor = PanelColor;
+            lblTitle.ForeColor = TextColor;
+            lblSub.ForeColor = MutedColor;
+            btnTheme.BackColor = CardColor;
+            btnTheme.ForeColor = TextColor;
+            btnTheme.FlatAppearance.BorderColor = BorderColor;
+
+            // Status
+            pnlStatus.BackColor = CardColor;
+            lblStatus.ForeColor = _sentimentService.IsReady ? GreenColor : AccentColor;
+
+            // Tab pages
+            foreach (TabPage tp in tcMain.TabPages)
             {
-                _darkBg = Color.FromArgb(18, 18, 30);
-                _darkPanel = Color.FromArgb(28, 28, 45);
-                _darkCard = Color.FromArgb(38, 38, 58);
-                _textLight = Color.FromArgb(248, 248, 255);
-                _textMuted = Color.FromArgb(148, 163, 184);
-            }
-            else
-            {
-                _darkBg = Color.FromArgb(245, 247, 250);
-                _darkPanel = Color.FromArgb(255, 255, 255);
-                _darkCard = Color.FromArgb(230, 235, 245);
-                _textLight = Color.FromArgb(20, 20, 40);
-                _textMuted = Color.FromArgb(100, 110, 130);
+                tp.BackColor = BgColor;
+                ApplyThemeToControls(tp.Controls);
             }
 
-            this.BackColor = _darkBg;
-            if (panelHeader != null) panelHeader.BackColor = _darkPanel;
-            if (panelStatus != null) panelStatus.BackColor = _darkCard;
-            if (txtInput != null) { txtInput.BackColor = _darkCard; txtInput.ForeColor = _textLight; }
-            if (gridResults != null)
+            // Tab1 specific
+            if (pnl1 != null) pnl1.BackColor = BgColor;
+            if (rtbInput != null) { rtbInput.BackColor = CardColor; rtbInput.ForeColor = TextColor; }
+            if (pnlResult != null) pnlResult.BackColor = CardColor;
+            if (btnClear != null)
             {
-                gridResults.BackgroundColor = _darkCard;
-                gridResults.DefaultCellStyle.BackColor = _darkCard;
-                gridResults.DefaultCellStyle.ForeColor = _textLight;
-                gridResults.ColumnHeadersDefaultCellStyle.BackColor = _darkPanel;
-                gridResults.ColumnHeadersDefaultCellStyle.ForeColor = _textLight;
+                btnClear.BackColor = CardColor;
+                btnClear.ForeColor = TextColor;
+                btnClear.FlatAppearance.BorderColor = BorderColor;
             }
-            if (panelResult != null) panelResult.BackColor = _darkCard;
-            if (panelStats != null) panelStats.BackColor = _darkCard;
-            if (panelPieChart != null) { panelPieChart.BackColor = _darkCard; panelPieChart.Invalidate(); }
-            if (panelBarChart != null) { panelBarChart.BackColor = _darkCard; panelBarChart.Invalidate(); }
 
-            this.Invalidate(true);
+            // Tab2 specific
+            if (pnl2 != null) pnl2.BackColor = BgColor;
+            if (lblFile != null) lblFile.ForeColor = MutedColor;
+            if (pnlStats != null) pnlStats.BackColor = CardColor;
+            if (btnBrowse != null)
+            {
+                btnBrowse.BackColor = CardColor;
+                btnBrowse.ForeColor = TextColor;
+                btnBrowse.FlatAppearance.BorderColor = AccentColor;
+            }
+
+            // Grid
+            if (dgvResults != null)
+            {
+                dgvResults.BackgroundColor = CardColor;
+                dgvResults.GridColor = BorderColor;
+                dgvResults.DefaultCellStyle.BackColor = CardColor;
+                dgvResults.DefaultCellStyle.ForeColor = TextColor;
+                dgvResults.AlternatingRowsDefaultCellStyle.BackColor =
+                    _isDarkMode ? Color.FromArgb(30, 30, 50) : Color.FromArgb(242, 244, 255);
+                dgvResults.AlternatingRowsDefaultCellStyle.ForeColor = TextColor;
+                dgvResults.ColumnHeadersDefaultCellStyle.BackColor =
+                    _isDarkMode ? Color.FromArgb(50, 50, 80) : Color.FromArgb(180, 185, 220);
+                dgvResults.ColumnHeadersDefaultCellStyle.ForeColor =
+                    _isDarkMode ? Color.White : Color.FromArgb(20, 20, 50);
+                dgvResults.Invalidate();
+            }
+
+            // Charts
+            if (pnlPie != null) { pnlPie.BackColor = CardColor; pnlPie.Invalidate(); }
+            if (pnlBar != null) { pnlBar.BackColor = CardColor; pnlBar.Invalidate(); }
+
+            // Export
+            if (rtbLog != null) { rtbLog.BackColor = CardColor; rtbLog.ForeColor = GreenColor; }
+
+            Invalidate(true);
+            Update();
         }
 
-        // ===================== HELPERS =====================
-
-        private void ResetResultPanel()
+        private void ApplyThemeToControls(Control.ControlCollection controls)
         {
-            panelResult.Visible = false;
+            foreach (Control c in controls)
+            {
+                if (c is Panel p) p.BackColor = BgColor;
+                if (c is Label l && l != lblSentiment && l != lblPos
+                    && l != lblNeg && l != lblMood)
+                {
+                    if (l.ForeColor != GreenColor && l.ForeColor != RedColor
+                        && l.ForeColor != Color.Orange && l.ForeColor != AccentColor)
+                        l.ForeColor = TextColor;
+                }
+                if (c.HasChildren)
+                    ApplyThemeToControls(c.Controls);
+            }
         }
 
-        private Label MakeLabel(string text, int x, int y, float size = 9.5f, FontStyle style = FontStyle.Regular)
+        // ============================================================
+        // HELPERS
+        // ============================================================
+        private Label MkLabel(string text, int x, int y,
+            float size = 9.5f, FontStyle style = FontStyle.Regular)
         {
             return new Label
             {
                 Text = text,
                 Location = new Point(x, y),
                 Font = new Font("Segoe UI", size, style),
-                ForeColor = _textLight,
+                ForeColor = TextColor,
                 AutoSize = true
             };
         }
 
-        private Button MakeButton(string text, int x, int y, Color backColor)
+        private Button MkBtn(string text, int x, int y, Color bg)
         {
             var btn = new Button
             {
                 Text = text,
                 Location = new Point(x, y),
                 FlatStyle = FlatStyle.Flat,
-                BackColor = backColor,
-                ForeColor = _textLight,
+                BackColor = bg,
+                ForeColor = bg == AccentColor || bg == GreenColor
+                    ? Color.White : TextColor,
                 Cursor = Cursors.Hand,
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold)
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
             };
             btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = ControlPaint.Light(backColor, 0.2f);
+            btn.FlatAppearance.MouseOverBackColor =
+                ControlPaint.Light(bg, 0.15f);
             return btn;
         }
 
-        private Label MakeStat(string label, string value, int x, Panel parent)
+        private Label MkStatBox(string label, string value, int x, Panel parent)
         {
-            var lblLabel = new Label
+            var lbl = new Label
             {
                 Text = label,
-                Location = new Point(x, 12),
+                Location = new Point(x, 10),
                 Font = new Font("Segoe UI", 8.5f),
-                ForeColor = _textMuted,
+                ForeColor = MutedColor,
                 AutoSize = true
             };
-            var lblValue = new Label
+            var val = new Label
             {
                 Text = value,
-                Location = new Point(x, 33),
-                Font = new Font("Segoe UI", 18f, FontStyle.Bold),
-                ForeColor = _textLight,
-                AutoSize = true,
-                Name = $"val_{x}"
+                Location = new Point(x, 30),
+                Font = new Font("Segoe UI", 17f, FontStyle.Bold),
+                ForeColor = TextColor,
+                AutoSize = true
             };
-            parent.Controls.AddRange(new Control[] { lblLabel, lblValue });
-            return lblValue;
-        }
-
-        private void UpdateStat(Label lbl, string value)
-        {
-            lbl.Text = value;
-        }
-
-        private void RoundPanel(Panel panel)
-        {
-            panel.Paint += (s, e) =>
-            {
-                var p = (Panel)s!;
-                using var pen = new Pen(_accent, 1.5f);
-                var rect = new Rectangle(0, 0, p.Width - 1, p.Height - 1);
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                e.Graphics.DrawRoundedRectangle(pen, rect, 10);
-            };
+            parent.Controls.AddRange(new Control[] { lbl, val });
+            return val;
         }
     }
 
-    // Extension for rounded rectangles
     public static class GraphicsExtensions
     {
-        public static void DrawRoundedRectangle(this Graphics g, Pen pen, Rectangle rect, int radius)
+        public static void DrawRoundedRectangle(this Graphics g,
+            Pen pen, Rectangle rect, int radius)
         {
-            using var path = new System.Drawing.Drawing2D.GraphicsPath();
+            using var path = new GraphicsPath();
             path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
             path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
-            path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2,
+                radius * 2, radius * 2, 0, 90);
             path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
             path.CloseFigure();
             g.DrawPath(pen, path);
