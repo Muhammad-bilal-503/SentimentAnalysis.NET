@@ -71,43 +71,20 @@ Millions of comments are generated daily on social media and review platforms. M
 
 ## 📸 Screenshots
 
-> **Add your screenshots here after running the application**
-
 ### Main Interface — Single Analysis Tab
-<!-- Replace with your actual screenshot -->
-```
-[ Add screenshot here: Single Analysis tab with a result ]
-```
+![Single Analysis](screenshots/single-analysis.png)
 
 ### Bulk CSV Analysis Tab
-```
-[ Add screenshot here: Bulk analysis with stats panel visible ]
-```
+![Bulk Analysis](screenshots/bulk-analysis.png)
 
 ### Charts Tab
-```
-[ Add screenshot here: Pie chart and bar chart ]
-```
-
-### Dark Mode
-```
-[ Add screenshot here: App in dark mode ]
-```
+![Charts](screenshots/charts.png)
 
 ### PDF Export Sample
-```
-[ Add screenshot here: Generated PDF report ]
-```
+![PDF Export](screenshots/pdf-export.png)
 
-> 💡 **How to add screenshots:**
-> 1. Take a screenshot of the running app (Win + Shift + S)
-> 2. Save as `.png` in a `screenshots/` folder in your repo
-> 3. Replace the placeholder text above with:
->    ```markdown
->    ![Single Analysis](screenshots/single-analysis.png)
->    ```
-
----
+### Export Result CSV File
+![Export Result](screenshots/export-result.png)
 
 ## 🛠️ Tech Stack
 
