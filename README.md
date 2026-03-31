@@ -1,4 +1,4 @@
-# 🧠 Sentiment Analyzer Pro
+#  Sentiment Analyzer Pro
 
 <div align="center">
 
@@ -19,7 +19,7 @@ Built with C# .NET 9 · ML.NET · Windows Forms
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [About the Project](#-about-the-project)
 - [Features](#-features)
@@ -34,7 +34,7 @@ Built with C# .NET 9 · ML.NET · Windows Forms
 
 ---
 
-## 📌 About the Project
+##  About the Project
 
 **Sentiment Analyzer Pro** is an AI-powered desktop application that detects whether a comment or review is **Positive** or **Negative** using a machine learning model trained on the **IMDB 50K Movie Reviews Dataset**.
 
@@ -52,7 +52,7 @@ Millions of comments are generated daily on social media and review platforms. M
 
 ---
 
-## ✨ Features
+##  Features
 
 | Feature | Description |
 |---|---|
@@ -69,7 +69,7 @@ Millions of comments are generated daily on social media and review platforms. M
 
 ---
 
-## 📸 Screenshots
+##  Screenshots
 
 ### Main Interface — Single Analysis Tab
 ![Single Analysis](screenshots/single-analysis.png)
@@ -86,7 +86,7 @@ Millions of comments are generated daily on social media and review platforms. M
 ### Export Result CSV File
 ![Export Result](screenshots/export-result.png)
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Technology | Version | Purpose |
 |---|---|---|
@@ -102,7 +102,7 @@ Millions of comments are generated daily on social media and review platforms. M
 
 ---
 
-## 📊 Dataset
+##  Dataset
 
 | Property | Detail |
 |---|---|
@@ -125,7 +125,7 @@ Millions of comments are generated daily on social media and review platforms. M
 
 ---
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### Prerequisites
 
