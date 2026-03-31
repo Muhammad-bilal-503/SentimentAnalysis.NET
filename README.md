@@ -203,7 +203,7 @@ Press **F5** in Visual Studio to build and run the application.
 
 ---
 
-## 📖 How to Use
+##  How to Use
 
 ### Single Text Analysis
 1. Click the **📝 Single Analysis** tab
@@ -233,7 +233,7 @@ comment
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 SentimentAnalysis.NET/
@@ -265,7 +265,7 @@ SentimentAnalysis.NET/
 
 ---
 
-## 🌍 Supported Languages
+##  Supported Languages
 
 | Language | Code | Region |
 |---|---|---|
@@ -286,7 +286,7 @@ SentimentAnalysis.NET/
 
 ---
 
-## 🔗 GitHub Repository
+##  GitHub Repository
 
 ```
 https://github.com/Muhammad-bilal-503/SentimentAnalysis.NET
@@ -294,7 +294,7 @@ https://github.com/Muhammad-bilal-503/SentimentAnalysis.NET
 
 ---
 
-## 👨‍💻 Developer
+##  Developer
 
 | | |
 |---|---|
@@ -306,7 +306,7 @@ https://github.com/Muhammad-bilal-503/SentimentAnalysis.NET
 
 ---
 
-## 📜 License
+##  License
 
 This project is developed for academic purposes as part of an AI-Based Application Development assignment.
 
