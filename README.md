@@ -306,16 +306,4 @@ https://github.com/Muhammad-bilal-503/SentimentAnalysis.NET
 
 ---
 
-##  License
 
-This project is developed for academic purposes as part of an AI-Based Application Development assignment.
-
----
-
-<div align="center">
-
-Made with ❤️ using C# · ML.NET · Windows Forms
-
-⭐ **Star this repo if you found it helpful!**
-
-</div>
