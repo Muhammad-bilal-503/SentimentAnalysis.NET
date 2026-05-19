@@ -496,12 +496,4 @@ secrets.json
 *.key
 *.secret
 
-# Trained ML models (agar kabhi save karoge)
-*.model
-*.h5
-*.onnx
-models/
 
-# Temporary files
-*.tmp
-*.log
