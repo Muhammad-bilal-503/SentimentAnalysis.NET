@@ -191,7 +191,7 @@ private const string ApiKey = "your-api-key-here";
 
 Get a free key at: [libretranslate.com](https://libretranslate.com)
 
-> ⚠️ Without an API key, English comments will still work perfectly. Non-English comments will be marked as "Skipped".
+>  Without an API key, English comments will still work perfectly. Non-English comments will be marked as "Skipped".
 
 ---
 
